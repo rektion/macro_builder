@@ -1,4 +1,7 @@
 import ctypes
+import time
+import keyboard
+from screeninfo import get_monitors
 
 SendInput = ctypes.windll.user32.SendInput
 
@@ -162,7 +165,14 @@ from ctypes import windll, Structure, c_long, byref
 class POINT(Structure):
     _fields_ = [("x", c_long), ("y", c_long)]
 
+def write_whole_str(str, delay=0):
+    keyboard.write(str, delay=delay)
 
+def from_ratio_to_x_y(ratio_x, ratio_y):
+    monitor = get_monitors()[0]
+    return round(monitor.width * ratio_x), round(monitor.height * ratio_y)
+
+# Returns x, y of the current cursor position
 def queryMousePosition():
     pt = POINT()
     windll.user32.GetCursorPos(byref(pt))
@@ -170,28 +180,51 @@ def queryMousePosition():
     # return { "x": pt.x, "y": pt.y}/
 
 
-
-
-
-def click(x, y):
-    # convert to ctypes pixels
-    # x = int(x * 0.666)
-    # y = int(y * 0.666)
+# Move the cursor to x, y and left click
+def click(x, y, delay=0):
     ctypes.windll.user32.SetCursorPos(x, y)
+    time.sleep(delay)
     ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
     ctypes.windll.user32.mouse_event(4, 0, 0, 0, 0)  # left up
 
 
+# left click
+def click_without_moving(delay=0):
+    time.sleep(delay)
+    ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
+    ctypes.windll.user32.mouse_event(4, 0, 0, 0, 0)  # left up
+
+
+# Same as click but with ratios instead of pixel position
+# Will work on every screen resolution
+# click_with_ratio(0.5, 0.5) will click in the middle of the screen
+def click_with_ratio(ratio_x, ratio_y, delay=0):
+    x, y = from_ratio_to_x_y(ratio_x, ratio_y)
+    click(x, y, delay)
+
+
+# Move cursor to x, y
 def moveMouseTo(x, y):
-    # convert to ctypes pixels
-    # x = int(x * 0.666)
-    # y = int(y * 0.666)
-    print(x, y)
     ctypes.windll.user32.SetCursorPos(x, y)
-    # ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
-    # ctypes.windll.user32.mouse_event(4, 0, 0, 0, 0)  # left up
 
 
+# Same as moveMouseTo but with ratios instead of pixel position
+# Will work on every screen resolution
+# moveMouseTo_with_ratio(0.5, 0.5) will put the cursor in the middle of the screen
+def moveMouseTo_with_ratio(ratio_x, ratio_y):
+    x, y = from_ratio_to_x_y(ratio_x, ratio_y)
+    moveMouseTo(x, y)
+
+
+# left click on current cursor position
+def left_click():
+    ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
+    ctypes.windll.user32.mouse_event(4, 0, 0, 0, 0)  # left up
+
+
+# Presses the input key
+# key_str is of type char
+# See KEYBOARD_MAPPING variable for the list of keys
 def PressKey(key_str):
     extra = ctypes.c_ulong(0)
     ii_ = Input_I()
@@ -200,9 +233,27 @@ def PressKey(key_str):
     ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
 
+# Releases the input key
+# key_str is of type char
+# See KEYBOARD_MAPPING variable for the list of keys
 def ReleaseKey(key_str):
     extra = ctypes.c_ulong(0)
     ii_ = Input_I()
     ii_.ki = KeyBdInput(0, KEYBOARD_MAPPING[key_str], 0x0008 | 0x0002, 0, ctypes.pointer(extra))
     x = Input(ctypes.c_ulong(1), ii_)
     ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+def press_multiple_key(key_arr):
+    for key in key_arr:
+        keyboard.press(key)
+        time.sleep(0.15)
+    for key in key_arr:
+        keyboard.release(key)
+
+# Press a key then click at current location
+# Ideal when opening menus and stuff
+def PressKey_and_click(key_str, delay_between):
+    PressKey(key_str)
+    ReleaseKey(key_str)
+    time.sleep(delay_between)
+    left_click()

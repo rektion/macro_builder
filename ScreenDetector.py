@@ -1,5 +1,6 @@
 from PIL import ImageGrab, Image
 from numpy import array
+from directKeys import from_ratio_to_x_y
 
 
 def load_image(path):
@@ -14,7 +15,15 @@ class ScreenDetector():
     def get_rgb_value(self, x, y):
         return self.screen.getpixel((x, y))
 
+    def get_rgb_value_with_ratios(self, ratio_x, ratio_y):
+        x, y = from_ratio_to_x_y(ratio_x, ratio_y)
+        return self.screen.getpixel((x, y))
+
     def is_pixel_equal(self, x, y, r, g, b):
+        return self.get_rgb_value(x, y) == (r, g, b)
+
+    def is_pixel_equal_with_ratios(self, ratio_x, ratio_y, r, g, b):
+        x, y = from_ratio_to_x_y(ratio_x, ratio_y)
         return self.get_rgb_value(x, y) == (r, g, b)
 
     # Asserting sub_image is 2D array of RGB values*
