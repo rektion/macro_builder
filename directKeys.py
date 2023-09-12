@@ -5,6 +5,13 @@ from screeninfo import get_monitors
 
 SendInput = ctypes.windll.user32.SendInput
 
+MOUSE_LEFTDOWN = 0x0002     # left button down
+MOUSE_LEFTUP = 0x0004       # left button up
+MOUSE_RIGHTDOWN = 0x0008    # right button down
+MOUSE_RIGHTUP = 0x0010      # right button up
+MOUSE_MIDDLEDOWN = 0x0020   # middle button down
+MOUSE_MIDDLEUP = 0x0040     # middle button up
+
 # Keyboard Scan Code Mappings
 KEYBOARD_MAPPING = {
     'escape': 0x01,
@@ -181,18 +188,21 @@ def queryMousePosition():
 
 
 # Move the cursor to x, y and left click
-def click(x, y, delay=0):
+def move_and_left_click(x, y, delay=0):
     ctypes.windll.user32.SetCursorPos(x, y)
-    time.sleep(delay)
-    ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
-    ctypes.windll.user32.mouse_event(4, 0, 0, 0, 0)  # left up
+    left_click_without_moving(delay=delay)
 
 
-# left click
-def click_without_moving(delay=0):
+def left_click_without_moving(delay=0):
     time.sleep(delay)
-    ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
-    ctypes.windll.user32.mouse_event(4, 0, 0, 0, 0)  # left up
+    ctypes.windll.user32.mouse_event(MOUSE_LEFTDOWN)  # left down
+    ctypes.windll.user32.mouse_event(MOUSE_LEFTUP)  # left up
+
+
+def right_click_without_moving(delay=0):
+    time.sleep(delay)
+    ctypes.windll.user32.mouse_event(MOUSE_RIGHTDOWN)  # right down
+    ctypes.windll.user32.mouse_event(MOUSE_RIGHTUP)  # right up
 
 
 # Same as click but with ratios instead of pixel position
@@ -200,7 +210,7 @@ def click_without_moving(delay=0):
 # click_with_ratio(0.5, 0.5) will click in the middle of the screen
 def click_with_ratio(ratio_x, ratio_y, delay=0):
     x, y = from_ratio_to_x_y(ratio_x, ratio_y)
-    click(x, y, delay)
+    move_and_left_click(x, y, delay)
 
 
 # Move cursor to x, y
@@ -214,12 +224,6 @@ def moveMouseTo(x, y):
 def moveMouseTo_with_ratio(ratio_x, ratio_y):
     x, y = from_ratio_to_x_y(ratio_x, ratio_y)
     moveMouseTo(x, y)
-
-
-# left click on current cursor position
-def left_click():
-    ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
-    ctypes.windll.user32.mouse_event(4, 0, 0, 0, 0)  # left up
 
 
 # Presses the input key
@@ -256,4 +260,4 @@ def PressKey_and_click(key_str, delay_between):
     PressKey(key_str)
     ReleaseKey(key_str)
     time.sleep(delay_between)
-    left_click()
+    left_click_without_moving()
